@@ -9,7 +9,7 @@ pipeline {
 
             steps{
                 script{
-                withSonarQubeEnv('sonarqube') { 
+                withSonarQubeEnv('sonarserver') { 
                 sh "mvn sonar:sonar"
                 }
                 timeout(time: 1, unit: 'HOURS') {
