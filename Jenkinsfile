@@ -1,31 +1,34 @@
-pipeline{
-
-      agent {
-                docker {
-                image 'maven:3-openjdk-11'
-
-                }
+pipeline {
+   tools {
+        maven 'Maven3'
+    }
+    agent any
+      
+    stages {
+        stage('Cloning Git') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '', url: 'https://github.com/akannan1087/springboot-app']]])     
             }
+        }
         
-        stages{
+        stage('Quality Gate Statuc Check'){
 
-              stage('Quality Gate Status Check'){
-                  steps{
-                      script{
-			      withSonarQubeEnv('sonarserver') { 
-			      sh "mvn clean sonar:sonar"
-                       	     	}
-			      timeout(time: 1, unit: 'HOURS') {
-			      def qg = waitForQualityGate()
-				      if (qg.status != 'OK') {
-					   error "Pipeline aborted due to quality gate failure: ${qg.status}"
-				      }
-                    		}
-		    	    sh "mvn clean install"
-		  
-                 	}
-               	 }  
-              }	
-		
-            }	       	     	         
+            steps{
+                script{
+                withSonarQubeEnv('sonarqube') { 
+                sh "mvn sonar:sonar"
+                }
+                timeout(time: 1, unit: 'HOURS') {
+                def qg = waitForQualityGate()
+                if (qg.status != 'OK') {
+                     error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                }
+                }
+		        sh "mvn clean install"
+                }
+            }  
+        }
+
+        
+    }
 }
